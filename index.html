@@ -324,9 +324,24 @@
   .modal{
     background: var(--paper-raised);
     border: 1px solid var(--line);
-    width: 420px;
+    width: 440px;
     max-width: 100%;
     padding: 28px;
+    max-height: 86vh;
+    overflow-y: auto;
+  }
+  .modal-divider{
+    border-top: 1px solid var(--line);
+    margin: 24px 0 20px 0;
+  }
+  .modal h4{
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+  }
+  .backup-row{
+    display:flex; gap: 10px; flex-wrap: wrap;
   }
   .modal h3{
     font-family:'Shippori Mincho', serif;
@@ -421,6 +436,17 @@
       <button id="toggleSecret" type="button">show</button>
     </div>
     <div id="settingsStatus" class="status-line"></div>
+
+    <div class="modal-divider"></div>
+    <h4>Backup</h4>
+    <p class="sub">Your entries are only saved in this browser. Download a copy now and then, or restore from a previous backup.</p>
+    <div class="backup-row">
+      <button class="secondary" id="exportBtn">Export entries</button>
+      <button class="secondary" id="importBtn">Import entries</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+    <div id="backupStatus" class="status-line"></div>
+
     <div class="row-close">
       <button class="secondary" id="closeSettings">Close</button>
       <button class="primary" id="saveSettings">Save</button>
@@ -724,6 +750,60 @@
     setTimeout(() => { el.style.borderColor = ''; }, 900);
   }
 
+  function exportEntries(){
+    const payload = { exportedAt: new Date().toISOString(), entries };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `song-goodbye-diary-${todayLocal()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    $('backupStatus').textContent = `Downloaded ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}.`;
+    $('backupStatus').className = 'status-line ok';
+  }
+
+  function importEntriesFile(file){
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try{
+        const parsed = JSON.parse(ev.target.result);
+        const incoming = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.entries) ? parsed.entries : null);
+        if(!incoming) throw new Error('bad-format');
+
+        const existingIds = new Set(entries.map(e => e.id));
+        let added = 0;
+        incoming.forEach(raw => {
+          if(!raw || typeof raw.date !== 'string' || typeof raw.goodbye !== 'string') return;
+          const entry = {
+            id: (raw.id && !existingIds.has(raw.id)) ? raw.id : (Date.now().toString(36) + Math.random().toString(36).slice(2,7)),
+            date: raw.date,
+            goodbye: raw.goodbye,
+            song: raw.song || null,
+            createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : Date.now()
+          };
+          existingIds.add(entry.id);
+          entries.push(entry);
+          added++;
+        });
+
+        if(added === 0) throw new Error('nothing-valid');
+
+        entries.sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+        await saveEntries();
+        renderEntries();
+        $('backupStatus').textContent = `Imported ${added} ${added === 1 ? 'entry' : 'entries'}.`;
+        $('backupStatus').className = 'status-line ok';
+      }catch(err){
+        $('backupStatus').textContent = "Could not read that file. Make sure it's a backup exported from this diary.";
+        $('backupStatus').className = 'status-line err';
+      }
+    };
+    reader.readAsText(file);
+  }
+
   function songUseCount(id){
     return entries.filter(e => e.song && e.song.id === id).length;
   }
@@ -788,6 +868,7 @@
   function openSettings(){
     $('settingsModal').classList.remove('hidden');
     $('settingsStatus').textContent = '';
+    $('backupStatus').textContent = '';
   }
   function closeSettings(){
     $('settingsModal').classList.add('hidden');
@@ -812,6 +893,13 @@
     searchDebounce = setTimeout(() => searchTracks(val), 350);
   });
   $('noSongToggle').addEventListener('change', handleNoSongToggle);
+  $('exportBtn').addEventListener('click', exportEntries);
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+  $('importFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file) importEntriesFile(file);
+    e.target.value = '';
+  });
   document.addEventListener('click', (e) => {
     if(!e.target.closest('.song-search')){
       $('searchResults').style.display = 'none';
