@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Song & Goodbye</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EFEDE3;
+    --paper-raised: #F6F4EB;
+    --ink: #26241F;
+    --ink-soft: #5C584D;
+    --ink-faint: #918C7C;
+    --line: #D6D0BE;
+    --stamp: #A5392C;
+    --stamp-soft: #E9D3CC;
+    --brass: #8C7A44;
+    --brass-soft: #E7E0C8;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .voice{ font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', serif; }
+
+  /* thread binding */
+  body::before{
+    content:"";
+    position: fixed;
+    top:0; bottom:0; left:0;
+    width: 26px;
+    background:
+      repeating-linear-gradient(180deg, var(--stamp) 0 2px, transparent 2px 22px);
+    opacity: 0.55;
+    z-index: 0;
+  }
+
+  .shell{
+    position: relative;
+    z-index: 1;
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 56px 32px 96px 56px;
+  }
+
+  header.top{
+    display:flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 20px;
+    margin-bottom: 48px;
+    gap: 24px;
+  }
+  header.top h1{
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 600;
+    font-size: 34px;
+    margin: 0 0 6px 0;
+    letter-spacing: 0.01em;
+  }
+  header.top p{
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  #settingsBtn{
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  #settingsBtn:hover{ border-color: var(--stamp); color: var(--stamp); }
+  #settingsBtn svg{ width:18px; height:18px; }
+
+  .layout{
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 56px;
+    align-items: start;
+  }
+  @media (max-width: 760px){
+    .layout{ grid-template-columns: 1fr; }
+    .shell{ padding: 40px 20px 72px 40px; }
+  }
+
+  /* ---- composer ---- */
+  .composer{
+    position: sticky;
+    top: 32px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    padding: 26px 24px;
+  }
+  .composer h2{
+    font-family: 'Shippori Mincho', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+  }
+  .field{ margin-bottom: 18px; }
+  .field label{
+    display:block;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  input[type=date], input[type=text], input[type=password], textarea{
+    width: 100%;
+    font-family: inherit;
+    font-size: 14.5px;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--line);
+    padding: 9px 11px;
+    border-radius: 2px;
+  }
+  input:focus, textarea:focus{
+    outline: none;
+    border-color: var(--stamp);
+  }
+  textarea{
+    resize: vertical;
+    min-height: 78px;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15.5px;
+    line-height: 1.8;
+  }
+
+  .song-search{ position: relative; }
+  .search-results{
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #fff;
+    border: 1px solid var(--line);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: 0 6px 16px rgba(38,36,31,0.12);
+  }
+  .search-results .row{
+    display:flex; align-items:center; gap:10px;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+  }
+  .search-results .row:last-child{ border-bottom: none; }
+  .search-results .row:hover{ background: var(--paper); }
+  .search-results img{ width:34px; height:34px; object-fit: cover; flex-shrink:0; }
+  .search-results .meta{ min-width:0; }
+  .search-results .meta .t{ font-size: 13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .search-results .meta .a{ font-size: 12px; color: var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .search-hint{ font-size: 12px; color: var(--ink-faint); margin-top: 6px; }
+  .search-hint button{
+    background:none; border:none; color: var(--stamp); cursor:pointer; padding:0; font-size:12px;
+    text-decoration: underline;
+  }
+
+  .selected-song{
+    display:flex; align-items:center; gap:12px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid var(--line);
+    margin-top: 8px;
+  }
+  .selected-song img{ width:48px; height:48px; object-fit:cover; flex-shrink:0; }
+  .selected-song .meta{ min-width:0; flex:1; }
+  .selected-song .meta .t{ font-size: 14px; font-weight: 500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .selected-song .meta .a{ font-size: 12.5px; color: var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .selected-song button{
+    background:none; border:none; color: var(--ink-faint); cursor:pointer; font-size: 12px;
+    text-decoration: underline; flex-shrink:0;
+  }
+
+  .warning{
+    font-size: 13px;
+    color: var(--stamp);
+    background: var(--stamp-soft);
+    border-left: 2px solid var(--stamp);
+    padding: 8px 10px;
+    margin-bottom: 14px;
+  }
+
+  .save-btn{
+    width: 100%;
+    background: var(--ink);
+    color: var(--paper-raised);
+    border: none;
+    padding: 12px;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+  .save-btn:hover{ background: var(--stamp); }
+  .save-btn.confirm{ background: var(--stamp); }
+
+  /* ---- log ---- */
+  .log h2{
+    font-family: 'Shippori Mincho', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 24px 0;
+  }
+  .month-label{
+    font-family: 'Shippori Mincho', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--brass);
+    margin: 28px 0 10px 0;
+  }
+  .month-label:first-child{ margin-top: 0; }
+
+  .entry{
+    display:grid;
+    grid-template-columns: 56px 48px 1fr 24px;
+    gap: 16px;
+    align-items: start;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .entry .date{
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    padding-top: 4px;
+  }
+  .entry .art{ width:48px; height:48px; object-fit: cover; flex-shrink:0; background: var(--paper); }
+  .entry .content .song-line{
+    display:flex; align-items:baseline; gap: 8px; flex-wrap: wrap;
+  }
+  .entry .content .song-title{ font-weight: 500; font-size: 15px; }
+  .entry .content .song-artist{ font-size: 13px; color: var(--ink-soft); }
+  .entry .content .badge{
+    font-size: 10.5px;
+    color: var(--stamp);
+    border: 1px solid var(--stamp);
+    border-radius: 8px;
+    padding: 0 6px;
+    line-height: 16px;
+  }
+  .entry .content .goodbye{
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15.5px;
+    margin-top: 6px;
+    color: var(--ink);
+  }
+  .entry .content .goodbye::before{
+    content: "\201C";
+    color: var(--brass);
+    margin-right: 2px;
+  }
+  .entry .del{
+    background:none; border:none; color: var(--ink-faint); cursor:pointer;
+    font-size: 16px; padding-top:4px;
+  }
+  .entry .del:hover{ color: var(--stamp); }
+
+  .empty{
+    text-align:center;
+    padding: 60px 20px;
+    color: var(--ink-faint);
+    font-family: 'Shippori Mincho', serif;
+    font-style: italic;
+    font-size: 15px;
+  }
+
+  /* ---- modal ---- */
+  .modal-backdrop{
+    position: fixed; inset:0;
+    background: rgba(38,36,31,0.45);
+    display:flex; align-items:center; justify-content:center;
+    z-index: 50;
+    padding: 20px;
+  }
+  .modal-backdrop.hidden{ display:none; }
+  .modal{
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    width: 420px;
+    max-width: 100%;
+    padding: 28px;
+  }
+  .modal h3{
+    font-family:'Shippori Mincho', serif;
+    font-size: 18px;
+    margin: 0 0 6px 0;
+  }
+  .modal p.sub{
+    font-size: 13px; color: var(--ink-soft); margin: 0 0 20px 0;
+  }
+  .modal a{ color: var(--stamp); }
+  .modal .row-close{
+    display:flex; justify-content: flex-end; gap: 10px; margin-top: 22px;
+  }
+  .modal button.secondary{
+    background:none; border: 1px solid var(--line); color: var(--ink-soft);
+    padding: 9px 16px; cursor:pointer; font-family: inherit; font-size: 13.5px;
+  }
+  .modal button.primary{
+    background: var(--ink); color: var(--paper-raised); border:none;
+    padding: 9px 16px; cursor:pointer; font-family: inherit; font-size: 13.5px;
+  }
+  .pw-row{ position: relative; }
+  .pw-row button{
+    position:absolute; right:8px; top:8px;
+    background:none; border:none; color: var(--ink-faint); cursor:pointer; font-size:12px;
+  }
+  .status-line{ font-size: 12.5px; margin-top: 10px; min-height: 16px; }
+  .status-line.ok{ color: #3B6D11; }
+  .status-line.err{ color: var(--stamp); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header class="top">
+    <div>
+      <h1>Song & Goodbye</h1>
+      <p>One song, one way to say goodbye. Every day, a different pair.</p>
+    </div>
+    <button id="settingsBtn" title="Spotify settings" aria-label="Spotify settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.65 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.65a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09A1.7 1.7 0 0 0 15 4.65a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.35 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.04z"/></svg>
+    </button>
+  </header>
+
+  <div class="layout">
+    <section class="composer">
+      <h2>Today's entry</h2>
+      <div class="field">
+        <label for="dateInput">Date</label>
+        <input type="date" id="dateInput">
+      </div>
+
+      <div class="field song-search">
+        <label for="songInput">Song of the day</label>
+        <input type="text" id="songInput" placeholder="Search a track or artist" autocomplete="off">
+        <div id="searchResults" class="search-results" style="display:none;"></div>
+        <div id="searchHint" class="search-hint"></div>
+        <div id="selectedSong"></div>
+      </div>
+
+      <div class="field">
+        <label for="goodbyeInput">Goodbye</label>
+        <textarea id="goodbyeInput" lang="ja" placeholder="さようなら、またね、お元気で…"></textarea>
+      </div>
+
+      <div id="warnings"></div>
+
+      <button id="saveBtn" class="save-btn">Save entry</button>
+    </section>
+
+    <section class="log">
+      <h2>Notebook</h2>
+      <div id="entryList"></div>
+    </section>
+  </div>
+</div>
+
+<div id="settingsModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <h3>Spotify connection</h3>
+    <p class="sub">Add your own Spotify app keys so the search bar can look up tracks. Get them from <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a> — create an app, no redirect URL is needed. These are saved for you, only within this diary.</p>
+    <div class="field">
+      <label for="clientIdInput">Client ID</label>
+      <input type="text" id="clientIdInput" autocomplete="off">
+    </div>
+    <div class="field pw-row">
+      <label for="clientSecretInput">Client secret</label>
+      <input type="password" id="clientSecretInput" autocomplete="off">
+      <button id="toggleSecret" type="button">show</button>
+    </div>
+    <div id="settingsStatus" class="status-line"></div>
+    <div class="row-close">
+      <button class="secondary" id="closeSettings">Close</button>
+      <button class="primary" id="saveSettings">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  let entries = [];
+  let credentials = { clientId: "", clientSecret: "" };
+  let spotifyToken = null;
+  let spotifyTokenExpiry = 0;
+  let selectedSong = null;
+  let searchDebounce = null;
+  let pendingConfirm = false;
+
+  const $ = (id) => document.getElementById(id);
+
+  function todayLocal(){
+    const d = new Date();
+    const off = d.getTimezoneOffset();
+    const local = new Date(d.getTime() - off*60000);
+    return local.toISOString().slice(0,10);
+  }
+
+  function fmtDate(iso){
+    const [y,m,d] = iso.split('-').map(Number);
+    const dt = new Date(y, m-1, d);
+    return dt.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  function monthLabel(iso){
+    const [y,m] = iso.split('-').map(Number);
+    const dt = new Date(y, m-1, 1);
+    return dt.toLocaleDateString(undefined, { year:'numeric', month:'long' });
+  }
+
+  async function loadEntries(){
+    try{
+      const raw = localStorage.getItem('diary-entries');
+      entries = raw ? JSON.parse(raw) : [];
+    }catch(e){
+      entries = [];
+    }
+    renderEntries();
+  }
+
+  async function saveEntries(){
+    try{
+      localStorage.setItem('diary-entries', JSON.stringify(entries));
+    }catch(e){
+      console.error('Could not save entries', e);
+    }
+  }
+
+  async function loadCredentials(){
+    try{
+      const raw = localStorage.getItem('spotify-credentials');
+      if(raw){
+        credentials = JSON.parse(raw);
+        $('clientIdInput').value = credentials.clientId || "";
+        $('clientSecretInput').value = credentials.clientSecret || "";
+      }
+    }catch(e){ /* none saved yet */ }
+    updateSearchHint();
+  }
+
+  async function saveCredentials(){
+    credentials.clientId = $('clientIdInput').value.trim();
+    credentials.clientSecret = $('clientSecretInput').value.trim();
+    try{
+      localStorage.setItem('spotify-credentials', JSON.stringify(credentials));
+      spotifyToken = null;
+      $('settingsStatus').textContent = 'Saved.';
+      $('settingsStatus').className = 'status-line ok';
+      updateSearchHint();
+    }catch(e){
+      $('settingsStatus').textContent = 'Could not save. Try again.';
+      $('settingsStatus').className = 'status-line err';
+    }
+  }
+
+  function updateSearchHint(){
+    const hint = $('searchHint');
+    if(!credentials.clientId || !credentials.clientSecret){
+      hint.innerHTML = 'No Spotify keys yet. <button type="button" id="openFromHint">Add them in settings</button>';
+      const btn = $('openFromHint');
+      if(btn) btn.addEventListener('click', openSettings);
+    }else{
+      hint.textContent = '';
+    }
+  }
+
+  async function getSpotifyToken(){
+    if(spotifyToken && Date.now() < spotifyTokenExpiry) return spotifyToken;
+    if(!credentials.clientId || !credentials.clientSecret){
+      throw new Error('missing-credentials');
+    }
+    const basic = btoa(credentials.clientId + ':' + credentials.clientSecret);
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + basic
+      },
+      body: 'grant_type=client_credentials'
+    });
+    if(!res.ok) throw new Error('token-failed');
+    const data = await res.json();
+    spotifyToken = data.access_token;
+    spotifyTokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
+    return spotifyToken;
+  }
+
+  async function searchTracks(query){
+    const resultsBox = $('searchResults');
+    if(!query.trim()){
+      resultsBox.style.display = 'none';
+      resultsBox.innerHTML = '';
+      return;
+    }
+    let token;
+    try{
+      token = await getSpotifyToken();
+    }catch(e){
+      resultsBox.style.display = 'none';
+      if(e.message === 'missing-credentials'){
+        updateSearchHint();
+      }else{
+        $('searchHint').textContent = 'Could not connect to Spotify. Check your keys in settings.';
+      }
+      return;
+    }
+    try{
+      const res = await fetch('https://api.spotify.com/v1/search?q=' + encodeURIComponent(query) + '&type=track&limit=8', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if(!res.ok) throw new Error('search-failed');
+      const data = await res.json();
+      const tracks = (data.tracks && data.tracks.items) || [];
+      if(tracks.length === 0){
+        resultsBox.innerHTML = '<div class="row" style="cursor:default;color:var(--ink-faint);">No tracks found</div>';
+        resultsBox.style.display = 'block';
+        return;
+      }
+      resultsBox.innerHTML = '';
+      tracks.forEach(track => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        const img = (track.album.images && track.album.images.length) ? track.album.images[track.album.images.length-1].url : '';
+        row.innerHTML = `
+          <img src="${img}" alt="">
+          <div class="meta">
+            <div class="t">${escapeHtml(track.name)}</div>
+            <div class="a">${escapeHtml(track.artists.map(a=>a.name).join(', '))}</div>
+          </div>`;
+        row.addEventListener('click', () => selectSong(track));
+        resultsBox.appendChild(row);
+      });
+      resultsBox.style.display = 'block';
+    }catch(e){
+      $('searchHint').textContent = 'Search failed. Try again in a moment.';
+    }
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function selectSong(track){
+    selectedSong = {
+      id: track.id,
+      name: track.name,
+      artist: track.artists.map(a=>a.name).join(', '),
+      album: track.album.name,
+      image: (track.album.images && track.album.images.length) ? track.album.images[track.album.images.length-1].url : '',
+      url: track.external_urls ? track.external_urls.spotify : ''
+    };
+    $('searchResults').style.display = 'none';
+    $('searchResults').innerHTML = '';
+    $('songInput').value = '';
+    renderSelectedSong();
+    checkDuplicates();
+  }
+
+  function renderSelectedSong(){
+    const box = $('selectedSong');
+    if(!selectedSong){ box.innerHTML = ''; return; }
+    box.innerHTML = `
+      <div class="selected-song">
+        <img src="${selectedSong.image}" alt="">
+        <div class="meta">
+          <div class="t">${escapeHtml(selectedSong.name)}</div>
+          <div class="a">${escapeHtml(selectedSong.artist)}</div>
+        </div>
+        <button type="button" id="clearSong">change</button>
+      </div>`;
+    $('clearSong').addEventListener('click', () => {
+      selectedSong = null;
+      renderSelectedSong();
+      checkDuplicates();
+    });
+  }
+
+  function normalize(text){
+    return text.trim().replace(/\s+/g, ' ');
+  }
+
+  function checkDuplicates(){
+    awaitingConfirm = false;
+    const warnBox = $('warnings');
+    warnBox.innerHTML = '';
+    pendingConfirm = false;
+    let messages = [];
+
+    if(selectedSong){
+      const match = entries.find(e => e.song && e.song.id === selectedSong.id);
+      if(match) messages.push(`This song was already logged on ${fmtDate(match.date)}.`);
+    }
+    const goodbyeText = normalize($('goodbyeInput').value);
+    if(goodbyeText){
+      const match = entries.find(e => normalize(e.goodbye) === goodbyeText);
+      if(match) messages.push(`This goodbye was already used on ${fmtDate(match.date)}.`);
+    }
+
+    if(messages.length){
+      pendingConfirm = true;
+      messages.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'warning';
+        div.textContent = m;
+        warnBox.appendChild(div);
+      });
+      $('saveBtn').textContent = 'Save anyway';
+      $('saveBtn').classList.add('confirm');
+    }else{
+      $('saveBtn').textContent = 'Save entry';
+      $('saveBtn').classList.remove('confirm');
+    }
+  }
+
+  let awaitingConfirm = false;
+
+  async function handleSave(){
+    const date = $('dateInput').value;
+    const goodbye = $('goodbyeInput').value.trim();
+
+    if(!date){ flashError($('dateInput')); return; }
+    if(!selectedSong){ flashError($('songInput')); return; }
+    if(!goodbye){ flashError($('goodbyeInput')); return; }
+
+    checkDuplicates();
+    if(pendingConfirm && !awaitingConfirm){
+      awaitingConfirm = true;
+      return;
+    }
+    awaitingConfirm = false;
+
+    entries.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+      date, song: selectedSong, goodbye, createdAt: Date.now()
+    });
+    entries.sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+    await saveEntries();
+
+    selectedSong = null;
+    $('goodbyeInput').value = '';
+    $('songInput').value = '';
+    renderSelectedSong();
+    $('warnings').innerHTML = '';
+    $('saveBtn').textContent = 'Save entry';
+    $('saveBtn').classList.remove('confirm');
+
+    renderEntries();
+  }
+
+  function flashError(el){
+    el.style.borderColor = '#A5392C';
+    setTimeout(() => { el.style.borderColor = ''; }, 900);
+  }
+
+  function songUseCount(id){
+    return entries.filter(e => e.song && e.song.id === id).length;
+  }
+  function goodbyeUseCount(text){
+    const n = normalize(text);
+    return entries.filter(e => normalize(e.goodbye) === n).length;
+  }
+
+  function renderEntries(){
+    const list = $('entryList');
+    if(entries.length === 0){
+      list.innerHTML = '<div class="empty">Your notebook is empty. Add today\u2019s song and goodbye to begin.</div>';
+      return;
+    }
+    let html = '';
+    let lastMonth = '';
+    entries.forEach(entry => {
+      const mLabel = monthLabel(entry.date);
+      if(mLabel !== lastMonth){
+        html += `<div class="month-label">${mLabel}</div>`;
+        lastMonth = mLabel;
+      }
+      const sCount = songUseCount(entry.song.id);
+      const gCount = goodbyeUseCount(entry.goodbye);
+      const songBadge = sCount > 1 ? `<span class="badge">\u00d7${sCount}</span>` : '';
+      const goodbyeBadge = gCount > 1 ? `<span class="badge">\u00d7${gCount}</span>` : '';
+      html += `
+        <div class="entry" data-id="${entry.id}">
+          <div class="date">${fmtDate(entry.date)}</div>
+          <img class="art" src="${entry.song.image}" alt="">
+          <div class="content">
+            <div class="song-line">
+              <span class="song-title">${escapeHtml(entry.song.name)}</span>
+              <span class="song-artist">${escapeHtml(entry.song.artist)}</span>
+              ${songBadge}
+            </div>
+            <div class="goodbye">${escapeHtml(entry.goodbye)} ${goodbyeBadge}</div>
+          </div>
+          <button class="del" title="Delete entry" aria-label="Delete entry">\u00d7</button>
+        </div>`;
+    });
+    list.innerHTML = html;
+    list.querySelectorAll('.entry .del').forEach(btn => {
+      btn.addEventListener('click', async (ev) => {
+        const row = ev.target.closest('.entry');
+        const id = row.dataset.id;
+        entries = entries.filter(e => e.id !== id);
+        await saveEntries();
+        renderEntries();
+      });
+    });
+  }
+
+  function openSettings(){
+    $('settingsModal').classList.remove('hidden');
+    $('settingsStatus').textContent = '';
+  }
+  function closeSettings(){
+    $('settingsModal').classList.add('hidden');
+  }
+
+  // wire up
+  $('dateInput').value = todayLocal();
+  $('settingsBtn').addEventListener('click', openSettings);
+  $('closeSettings').addEventListener('click', closeSettings);
+  $('settingsModal').addEventListener('click', (e) => { if(e.target.id === 'settingsModal') closeSettings(); });
+  $('saveSettings').addEventListener('click', saveCredentials);
+  $('toggleSecret').addEventListener('click', () => {
+    const inp = $('clientSecretInput');
+    const btn = $('toggleSecret');
+    if(inp.type === 'password'){ inp.type = 'text'; btn.textContent = 'hide'; }
+    else{ inp.type = 'password'; btn.textContent = 'show'; }
+  });
+
+  $('songInput').addEventListener('input', (e) => {
+    const val = e.target.value;
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => searchTracks(val), 350);
+  });
+  document.addEventListener('click', (e) => {
+    if(!e.target.closest('.song-search')){
+      $('searchResults').style.display = 'none';
+    }
+  });
+
+  $('goodbyeInput').addEventListener('input', checkDuplicates);
+  $('saveBtn').addEventListener('click', handleSave);
+
+  loadEntries();
+  loadCredentials();
+})();
+</script>
+</body>
+</html>
