@@ -118,6 +118,27 @@
     color: var(--ink-soft);
     margin-bottom: 6px;
   }
+  .field-head{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .no-song-toggle{
+    display:flex !important;
+    align-items:center;
+    gap: 5px;
+    font-size: 12.5px !important;
+    color: var(--ink-soft);
+    margin-bottom: 0 !important;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .no-song-toggle input{
+    width: 13px; height: 13px;
+    accent-color: var(--stamp);
+    cursor: pointer;
+  }
   input[type=date], input[type=text], input[type=password], textarea{
     width: 100%;
     font-family: inherit;
@@ -239,6 +260,19 @@
     padding-top: 4px;
   }
   .entry .art{ width:48px; height:48px; object-fit: cover; flex-shrink:0; background: var(--paper); }
+  .entry .art-none{
+    width:48px; height:48px; flex-shrink:0;
+    border: 1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    color: var(--ink-faint);
+    font-family: 'Shippori Mincho', serif;
+    font-size: 18px;
+  }
+  .entry .content .song-title.none{
+    color: var(--ink-faint);
+    font-style: italic;
+    font-weight: 400;
+  }
   .entry .content .song-line{
     display:flex; align-items:baseline; gap: 8px; flex-wrap: wrap;
   }
@@ -346,7 +380,10 @@
       </div>
 
       <div class="field song-search">
-        <label for="songInput">Song of the day</label>
+        <div class="field-head">
+          <label for="songInput">Song of the day</label>
+          <label class="no-song-toggle" for="noSongToggle"><input type="checkbox" id="noSongToggle"> No song today</label>
+        </div>
         <input type="text" id="songInput" placeholder="Search a track or artist" autocomplete="off">
         <div id="searchResults" class="search-results" style="display:none;"></div>
         <div id="searchHint" class="search-hint"></div>
@@ -591,6 +628,22 @@
     });
   }
 
+  function handleNoSongToggle(){
+    const noSong = $('noSongToggle').checked;
+    $('songInput').disabled = noSong;
+    $('songInput').value = '';
+    $('searchResults').style.display = 'none';
+    $('searchResults').innerHTML = '';
+    $('searchHint').textContent = '';
+    if(noSong){
+      selectedSong = null;
+      renderSelectedSong();
+    }else{
+      updateSearchHint();
+    }
+    checkDuplicates();
+  }
+
   function normalize(text){
     return text.trim().replace(/\s+/g, ' ');
   }
@@ -633,9 +686,10 @@
   async function handleSave(){
     const date = $('dateInput').value;
     const goodbye = $('goodbyeInput').value.trim();
+    const noSong = $('noSongToggle').checked;
 
     if(!date){ flashError($('dateInput')); return; }
-    if(!selectedSong){ flashError($('songInput')); return; }
+    if(!noSong && !selectedSong){ flashError($('songInput')); return; }
     if(!goodbye){ flashError($('goodbyeInput')); return; }
 
     checkDuplicates();
@@ -647,7 +701,7 @@
 
     entries.push({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
-      date, song: selectedSong, goodbye, createdAt: Date.now()
+      date, song: noSong ? null : selectedSong, goodbye, createdAt: Date.now()
     });
     entries.sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
     await saveEntries();
@@ -655,6 +709,8 @@
     selectedSong = null;
     $('goodbyeInput').value = '';
     $('songInput').value = '';
+    $('songInput').disabled = false;
+    $('noSongToggle').checked = false;
     renderSelectedSong();
     $('warnings').innerHTML = '';
     $('saveBtn').textContent = 'Save entry';
@@ -690,19 +746,27 @@
         html += `<div class="month-label">${mLabel}</div>`;
         lastMonth = mLabel;
       }
-      const sCount = songUseCount(entry.song.id);
+      const hasSong = !!entry.song;
       const gCount = goodbyeUseCount(entry.goodbye);
-      const songBadge = sCount > 1 ? `<span class="badge">\u00d7${sCount}</span>` : '';
       const goodbyeBadge = gCount > 1 ? `<span class="badge">\u00d7${gCount}</span>` : '';
+      const artHtml = hasSong
+        ? `<img class="art" src="${entry.song.image}" alt="">`
+        : `<div class="art-none" aria-hidden="true">\u2014</div>`;
+      let songLineHtml;
+      if(hasSong){
+        const sCount = songUseCount(entry.song.id);
+        const songBadge = sCount > 1 ? `<span class="badge">\u00d7${sCount}</span>` : '';
+        songLineHtml = `<span class="song-title">${escapeHtml(entry.song.name)}</span><span class="song-artist">${escapeHtml(entry.song.artist)}</span>${songBadge}`;
+      }else{
+        songLineHtml = `<span class="song-title none">No song</span>`;
+      }
       html += `
         <div class="entry" data-id="${entry.id}">
           <div class="date">${fmtDate(entry.date)}</div>
-          <img class="art" src="${entry.song.image}" alt="">
+          ${artHtml}
           <div class="content">
             <div class="song-line">
-              <span class="song-title">${escapeHtml(entry.song.name)}</span>
-              <span class="song-artist">${escapeHtml(entry.song.artist)}</span>
-              ${songBadge}
+              ${songLineHtml}
             </div>
             <div class="goodbye">${escapeHtml(entry.goodbye)} ${goodbyeBadge}</div>
           </div>
@@ -747,6 +811,7 @@
     clearTimeout(searchDebounce);
     searchDebounce = setTimeout(() => searchTracks(val), 350);
   });
+  $('noSongToggle').addEventListener('change', handleNoSongToggle);
   document.addEventListener('click', (e) => {
     if(!e.target.closest('.song-search')){
       $('searchResults').style.display = 'none';
