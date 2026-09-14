@@ -1,0 +1,363 @@
+  :root{
+    --paper: #EFEDE3;
+    --paper-raised: #F6F4EB;
+    --ink: #26241F;
+    --ink-soft: #5C584D;
+    --ink-faint: #918C7C;
+    --line: #D6D0BE;
+    --stamp: #A5392C;
+    --stamp-soft: #E9D3CC;
+    --brass: #8C7A44;
+    --brass-soft: #E7E0C8;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .voice{ font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', serif; }
+
+  /* thread binding */
+  body::before{
+    content:"";
+    position: fixed;
+    top:0; bottom:0; left:0;
+    width: 26px;
+    background:
+      repeating-linear-gradient(180deg, var(--stamp) 0 2px, transparent 2px 22px);
+    opacity: 0.55;
+    z-index: 0;
+  }
+
+  .shell{
+    position: relative;
+    z-index: 1;
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 56px 32px 96px 56px;
+  }
+
+  header.top{
+    display:flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 20px;
+    margin-bottom: 48px;
+    gap: 24px;
+  }
+  header.top h1{
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 600;
+    font-size: 34px;
+    margin: 0 0 6px 0;
+    letter-spacing: 0.01em;
+  }
+  header.top p{
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  #settingsBtn{
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  #settingsBtn:hover{ border-color: var(--stamp); color: var(--stamp); }
+  #settingsBtn svg{ width:18px; height:18px; }
+
+  .layout{
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 56px;
+    align-items: start;
+  }
+  @media (max-width: 760px){
+    .layout{ grid-template-columns: 1fr; }
+    .shell{ padding: 40px 20px 72px 40px; }
+  }
+
+  /* ---- composer ---- */
+  .composer{
+    position: sticky;
+    top: 32px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    padding: 26px 24px;
+  }
+  .composer h2{
+    font-family: 'Shippori Mincho', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+  }
+  .field{ margin-bottom: 18px; }
+  .field label{
+    display:block;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .field-head{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .no-song-toggle{
+    display:flex !important;
+    align-items:center;
+    gap: 5px;
+    font-size: 12.5px !important;
+    color: var(--ink-soft);
+    margin-bottom: 0 !important;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .no-song-toggle input{
+    width: 13px; height: 13px;
+    accent-color: var(--stamp);
+    cursor: pointer;
+  }
+  input[type=date], input[type=text], input[type=password], textarea{
+    width: 100%;
+    font-family: inherit;
+    font-size: 14.5px;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--line);
+    padding: 9px 11px;
+    border-radius: 2px;
+  }
+  input:focus, textarea:focus{
+    outline: none;
+    border-color: var(--stamp);
+  }
+  textarea{
+    resize: vertical;
+    min-height: 78px;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15.5px;
+    line-height: 1.8;
+  }
+
+  .song-search{ position: relative; }
+  .search-results{
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #fff;
+    border: 1px solid var(--line);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: 0 6px 16px rgba(38,36,31,0.12);
+  }
+  .search-results .row{
+    display:flex; align-items:center; gap:10px;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+  }
+  .search-results .row:last-child{ border-bottom: none; }
+  .search-results .row:hover{ background: var(--paper); }
+  .search-results img{ width:34px; height:34px; object-fit: cover; flex-shrink:0; }
+  .search-results .meta{ min-width:0; }
+  .search-results .meta .t{ font-size: 13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .search-results .meta .a{ font-size: 12px; color: var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .search-hint{ font-size: 12px; color: var(--ink-faint); margin-top: 6px; }
+  .search-hint button{
+    background:none; border:none; color: var(--stamp); cursor:pointer; padding:0; font-size:12px;
+    text-decoration: underline;
+  }
+
+  .selected-song{
+    display:flex; align-items:center; gap:12px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid var(--line);
+    margin-top: 8px;
+  }
+  .selected-song img{ width:48px; height:48px; object-fit:cover; flex-shrink:0; }
+  .selected-song .meta{ min-width:0; flex:1; }
+  .selected-song .meta .t{ font-size: 14px; font-weight: 500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .selected-song .meta .a{ font-size: 12.5px; color: var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .selected-song button{
+    background:none; border:none; color: var(--ink-faint); cursor:pointer; font-size: 12px;
+    text-decoration: underline; flex-shrink:0;
+  }
+
+  .warning{
+    font-size: 13px;
+    color: var(--stamp);
+    background: var(--stamp-soft);
+    border-left: 2px solid var(--stamp);
+    padding: 8px 10px;
+    margin-bottom: 14px;
+  }
+
+  .save-btn{
+    width: 100%;
+    background: var(--ink);
+    color: var(--paper-raised);
+    border: none;
+    padding: 12px;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+  .save-btn:hover{ background: var(--stamp); }
+  .save-btn.confirm{ background: var(--stamp); }
+
+  /* ---- log ---- */
+  .log h2{
+    font-family: 'Shippori Mincho', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 24px 0;
+  }
+  .month-label{
+    font-family: 'Shippori Mincho', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--brass);
+    margin: 28px 0 10px 0;
+  }
+  .month-label:first-child{ margin-top: 0; }
+
+  .entry{
+    display:grid;
+    grid-template-columns: 56px 48px 1fr 24px;
+    gap: 16px;
+    align-items: start;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .entry .date{
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    padding-top: 4px;
+  }
+  .entry .art{ width:48px; height:48px; object-fit: cover; flex-shrink:0; background: var(--paper); }
+  .entry .art-none{
+    width:48px; height:48px; flex-shrink:0;
+    border: 1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    color: var(--ink-faint);
+    font-family: 'Shippori Mincho', serif;
+    font-size: 18px;
+  }
+  .entry .content .song-title.none{
+    color: var(--ink-faint);
+    font-style: italic;
+    font-weight: 400;
+  }
+  .entry .content .song-line{
+    display:flex; align-items:baseline; gap: 8px; flex-wrap: wrap;
+  }
+  .entry .content .song-title{ font-weight: 500; font-size: 15px; }
+  .entry .content .song-artist{ font-size: 13px; color: var(--ink-soft); }
+  .entry .content .badge{
+    font-size: 10.5px;
+    color: var(--stamp);
+    border: 1px solid var(--stamp);
+    border-radius: 8px;
+    padding: 0 6px;
+    line-height: 16px;
+  }
+  .entry .content .goodbye{
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15.5px;
+    margin-top: 6px;
+    color: var(--ink);
+  }
+  .entry .content .goodbye::before{
+    content: "\201C";
+    color: var(--brass);
+    margin-right: 2px;
+  }
+  .entry .del{
+    background:none; border:none; color: var(--ink-faint); cursor:pointer;
+    font-size: 16px; padding-top:4px;
+  }
+  .entry .del:hover{ color: var(--stamp); }
+
+  .empty{
+    text-align:center;
+    padding: 60px 20px;
+    color: var(--ink-faint);
+    font-family: 'Shippori Mincho', serif;
+    font-style: italic;
+    font-size: 15px;
+  }
+
+  /* ---- modal ---- */
+  .modal-backdrop{
+    position: fixed; inset:0;
+    background: rgba(38,36,31,0.45);
+    display:flex; align-items:center; justify-content:center;
+    z-index: 50;
+    padding: 20px;
+  }
+  .modal-backdrop.hidden{ display:none; }
+  .modal{
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    width: 440px;
+    max-width: 100%;
+    padding: 28px;
+    max-height: 86vh;
+    overflow-y: auto;
+  }
+  .modal-divider{
+    border-top: 1px solid var(--line);
+    margin: 24px 0 20px 0;
+  }
+  .modal h4{
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+  }
+  .backup-row{
+    display:flex; gap: 10px; flex-wrap: wrap;
+  }
+  .modal h3{
+    font-family:'Shippori Mincho', serif;
+    font-size: 18px;
+    margin: 0 0 6px 0;
+  }
+  .modal p.sub{
+    font-size: 13px; color: var(--ink-soft); margin: 0 0 20px 0;
+  }
+  .modal a{ color: var(--stamp); }
+  .modal .row-close{
+    display:flex; justify-content: flex-end; gap: 10px; margin-top: 22px;
+  }
+  .modal button.secondary{
+    background:none; border: 1px solid var(--line); color: var(--ink-soft);
+    padding: 9px 16px; cursor:pointer; font-family: inherit; font-size: 13.5px;
+  }
+  .modal button.primary{
+    background: var(--ink); color: var(--paper-raised); border:none;
+    padding: 9px 16px; cursor:pointer; font-family: inherit; font-size: 13.5px;
+  }
+  .pw-row{ position: relative; }
+  .pw-row button{
+    position:absolute; right:8px; top:8px;
+    background:none; border:none; color: var(--ink-faint); cursor:pointer; font-size:12px;
+  }
+  .status-line{ font-size: 12.5px; margin-top: 10px; min-height: 16px; }
+  .status-line.ok{ color: #3B6D11; }
+  .status-line.err{ color: var(--stamp); }
